@@ -9,6 +9,8 @@ import {
   StyleSheet,
   Text,
 
+  TextInput,
+
   View,
 } from 'react-native';
 
@@ -23,12 +25,12 @@ const user = [
   },
   {
     street: "aaa",
-    city: "madurai",
+    city: "Anytown2",
     country: "S.colony"
   },
   {
     street: "bbbb",
-    city: "madurai",
+    city: "Anytown3",
     country: "Simmakal"
   },
   {
@@ -36,12 +38,23 @@ const user = [
     city: "madurai",
     country: "In"
   },
+  {
+    street: "ssss",
+    city: "fff",
+    country: "madurai"
+  },
+  {
+    street: "madurai",
+    city: "ssss",
+    country: "bbbb"
+  },
 ]
 
 
 
 
 const App = () => {
+  const [text, setText] = useState('')
 
   const db = SQLite.openDatabase(
     {
@@ -59,7 +72,7 @@ const App = () => {
         'CREATE TABLE IF NOT EXISTS json_table (id INTEGER PRIMARY KEY AUTOINCREMENT, data TEXT);'
       );
     });
-
+userlistApi()
   }, [])
   const userlistApi = async () => {
     // const response = await fetch('https://jsonplaceholder.typicode.com/posts?_page=1&_limit=10');
@@ -68,14 +81,11 @@ const App = () => {
 
       tx.executeSql('INSERT INTO json_table (data) VALUES (?);', [
         JSON.stringify(user)])
-      Alert.alert("Data inserted")
+      Alert.alert(" Json Stringfy of Array of object  inserted to DB" )
 
     })
   }
   const getdatafromDb = () => {
-
-    //var queryString= 'SELECT * FROM json_table', [],            //get all data
-    //var queryString='SELECT * FROM json_table  WHERE data ?;', [],         // get array of data
     db.transaction(tx => {
       tx.executeSql('SELECT * FROM json_table;', [], (tx, results) => {
         console.log(results, "resultsresults");
@@ -157,7 +167,7 @@ const App = () => {
         json_table,
             json_each(json_table.data)
         WHERE 
-            json_extract(json_each.value, '$.city') = 'Anytown1'
+            json_extract(json_each.value, '$.city') = 'madurai' 
     )
     
     SELECT DISTINCT json_group_array(item) as data
@@ -277,6 +287,50 @@ const App = () => {
 
     });
   }
+  const serachmultiple = (text) => {
+    console.log(text);
+    
+    db.transaction(tx => {
+      const keys = Object.keys(user[0]);
+      
+     
+      const conditions = keys.map(key => `json_extract(json_each.value,'$.${key}') LIKE '%${text}%'`).join(" OR ");
+    //console.log(conditions,'conditions');
+   ///const sqlQuery = `SELECT * FROM json_table, json_each(json_table.data) WHERE ${conditions}`;
+   const sql=`WITH json_items AS (
+           
+    SELECT DISTINCT json_each.value as item
+    FROM 
+    json_table,
+        json_each(json_table.data)
+    WHERE ${conditions}
+       
+        
+)
+
+SELECT DISTINCT json_group_array(item) as data
+FROM json_items;`
+
+      tx.executeSql(sql, [], (tx, results) => {
+
+        let len = results.rows.length;
+        for (let i = 0; i < len; i++) {
+          let row = results.rows.item(i);
+          console.log("Fitered Json data===========>", row.data);
+        };
+
+
+      },
+
+        error => {
+          console.log("Error occurred:", error);
+        }
+      );
+
+   
+    });
+
+  }
   return (
     <SafeAreaView style={{ flex: 1, }}>
       <StatusBar
@@ -288,15 +342,15 @@ const App = () => {
         <View
           style={{
 
-            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '60%',
+            flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: '30%',
           }}>
           <Text style={{ fontSize: 24, color: 'black', fontWeight: 'bold' }}>Sqlite Storage</Text>
 
         </View>
-        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+        {/* <View style={{ marginHorizontal: 20, marginTop: 20 }}>
           <Button onPress={() => userlistApi()} title='Insert Json Data'></Button>
 
-        </View>
+        </View> */}
         <View style={{ marginHorizontal: 20, marginTop: 20 }}>
           <Button onPress={() => getdatafromDb()} title='Get All Json Data From DB'></Button>
 
@@ -316,6 +370,16 @@ const App = () => {
           <Button onPress={() => insertnewObject()} title='Insert new object for Json in Db '></Button>
 
         </View>
+
+        <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+          <TextInput style={{ borderColor: 'blue', borderWidth: 1, padding: 10 }} placeholder='Search' onChangeText={(val) => { setText(val) }} value={text}>
+
+          </TextInput>
+          <View style={{ marginHorizontal: 20, marginTop: 20 }}>
+            <Button onPress={() => { serachmultiple(text) }} title='Search and Get Data from Db  '></Button>
+          </View>
+
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -326,3 +390,28 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
+
+// `
+        
+//         WITH json_items AS (
+           
+//           SELECT  json_each.value as item
+//           FROM 
+//           json_table,
+//               json_each(json_table.data)
+//           WHERE 
+//               json_extract(json_each.value,'$.country') LIKE '%${text}%' OR
+//               json_extract(json_each.value,'$.city') LIKE '%${text}%' OR
+//               json_extract(json_each.value,'$.street') LIKE '%${text}%'
+              
+//       )
+      
+//       SELECT  json_group_array(item) as data
+//       FROM json_items;
+//         `
+
+
+
+
+
