@@ -48,7 +48,7 @@
 
 When user search value  of object and it will be compared to each key then retrun a matched  array of object 
 
-if you check your  value with each key in object sql query like blew
+1.if you check your  value with each key in object sql query like blew
 ` WHERE json_extract(json_each.value,'$.${key}') LIKE '%${text}%'`.join(" OR ");
 
 2.if you check your search value with specified key in object sql query like below
