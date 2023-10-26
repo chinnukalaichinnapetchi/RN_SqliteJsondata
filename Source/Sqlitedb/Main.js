@@ -13,7 +13,6 @@ import {
 
   View,
 } from 'react-native';
-import InsertData from './DBFun/InsertData';
 
 import { getdatafromDb,filterData,updatekeyvalueobje,deleteobjectkey,insertnewObject,serachmultiple, createDb } from './DBfun';
 
